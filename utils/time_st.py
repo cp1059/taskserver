@@ -62,11 +62,6 @@ class UtilTime(object):
 
         time_local = time.localtime(int(timestamp))
         return time.strftime(format_v, time_local)
-
-    #时间戳转arrow
-    def timestamp_to_arrow(self, timestamp):
-        return self.arrow.get(timestamp)
-
     #字符串转时间戳
     def string_to_timestamp(self, string_s=None,
                             format_v="YYYY-MM-DD HH:mm:ss"):

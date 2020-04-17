@@ -26,105 +26,72 @@ class CpTermUpdHandler(object):
 
     def __init__(self,**kwargs):
 
-        self.ut = kwargs.get("ut")
         self.cp = kwargs.get("cp")
 
-    # def Cqssc(self):
+    # def getNextTerm(self,term=None):
     #
-    #     """
-    #     重庆时时彩
-    #     :return:
-    #     """
-    #
-    #     termnumber = 59
-    #     name = 'cqssc'
-    #
-    #     key="term_{}".format(name)
-    #
+    #     # if term:
+    #     #     today = self.ut.arrow_to_string(format_v="YYYYMMDD")
+    #     #     tomorrow = self.ut.arrow_to_string(self.ut.today.shift(days=1), format_v="YYYYMMDD")
+    #     #
+    #     #     autoid = int(term[8:])
+    #     #
+    #     #     if self.cp.termtot == autoid:
+    #     #         tmp = "{}%0{}d".format(tomorrow,len(str(self.cp.termtot)))
+    #     #         return tmp%(1)
+    #     #     else:
+    #     #         tmp = "{}%0{}d".format(today,len(str(self.cp.termtot)))
+    #     #         return tmp%(autoid+1)
+    #     # else:
     #     today = self.ut.arrow_to_string(format_v="YYYYMMDD")
-    #     tomorrow = self.ut.arrow_to_string(self.ut.today.shift(days=1), format_v="YYYYMMDD")
+    #     if self.cp.opentime == 'all':
+    #         currTime = self.ut.arrow_to_string(format_v="HHmm")
+    #         autoid = (int(currTime[:2]) * 60 + int(currTime[2:])) // self.cp.termnum
+    #         tmp = "{}%0{}d".format(today,len(self.cp.coderule) if self.cp.coderule else len(str(self.cp.termtot)))
+    #         return tmp%(autoid)
+    #     else:
+    #         term = 0
+    #         currterm = None
+    #         currTime = self.ut.arrow_to_string(format_v="HHmm")
+    #         for item in self.cp.opentime.split("|"):
+    #             start_time = item.split('-')[0]
+    #             end_time = item.split('-')[1]
     #
-    #     data = {}
-    #     tomorrow_first_next = ""
-    #     for i in range(termnumber):
+    #             if currTime < end_time:
+    #                 r = (int(currTime[:2]) * 60 + int(currTime[2:])) - (int(start_time[:2]) * 60 + int(start_time[2:]))
+    #                 if r < 0:
+    #                     currterm = term
+    #                 else:
+    #                     currterm = r // self.cp.termnum + term + 1
+    #             else:
+    #                 a = self.ut.arrow_to_string(
+    #                     self.ut.string_to_arrow(string_s=end_time, format_v="HHmm").shift(hours=-(int(start_time[0:2])),
+    #                                                                                  minutes=-(
+    #                                                                                      int(start_time[2:4]))),
+    #                     "HH:mm")
+    #                 term += (int(a.split(":")[0]) * 60 + int(a.split(":")[1])) // self.cp.termnum + 1
     #
-    #         term = "%s0%02d" % (tomorrow, i + 1)
-    #
-    #         if i == 0:
-    #             tomorrow_first_next = term
-    #
-    #         if i == termnumber - 1:
-    #             nextterm = "today"
-    #         else:
-    #             nextterm = "%s0%02d" % (tomorrow, i + 2)
-    #         data[term] = nextterm
-    #     self.redis.hset(key, format(tomorrow), json.dumps({"term": data}))
-    #
-    #     data = {}
-    #     for i in range(termnumber):
-    #         term = "%s0%02d" % (today, i + 1)
-    #         if i == termnumber - 1:
-    #             nextterm = tomorrow_first_next
-    #         else:
-    #             nextterm = "%s0%02d" % (today, i + 2)
-    #         data[term] = nextterm
-    #     self.redis.hset(key, format(today), json.dumps({"term": data}))
+    #         autoid = currterm
+    #         tmp = "{}%0{}d".format(today,len(self.cp.coderule) if self.cp.coderule else len(str(self.cp.termtot)))
+    #         return tmp%(autoid)
 
-    def getNextTerm(self,term=None):
+    def getTerm(self,autoid,next_autoid):
 
-        # if term:
-        #     today = self.ut.arrow_to_string(format_v="YYYYMMDD")
-        #     tomorrow = self.ut.arrow_to_string(self.ut.today.shift(days=1), format_v="YYYYMMDD")
-        #
-        #     autoid = int(term[8:])
-        #
-        #     if self.cp.termtot == autoid:
-        #         tmp = "{}%0{}d".format(tomorrow,len(str(self.cp.termtot)))
-        #         return tmp%(1)
-        #     else:
-        #         tmp = "{}%0{}d".format(today,len(str(self.cp.termtot)))
-        #         return tmp%(autoid+1)
-        # else:
         today = self.ut.arrow_to_string(format_v="YYYYMMDD")
-        if self.cp.opentime == 'all':
-            currTime = self.ut.arrow_to_string(format_v="HHmm")
-            autoid = (int(currTime[:2]) * 60 + int(currTime[2:])) // self.cp.termnum
-            tmp = "{}%0{}d".format(today,len(self.cp.coderule) if self.cp.coderule else len(str(self.cp.termtot)))
-            return tmp%(autoid)
+        tomorrow = self.ut.arrow_to_string(self.ut.today.shift(days=1), format_v="YYYYMMDD")
+        if autoid>next_autoid:
+            self.currterm = "{}{}".format(today,autoid)
+            self.nextterm = "{}{}".format(tomorrow, next_autoid)
         else:
-            term = 0
-            currterm = None
-            currTime = self.ut.arrow_to_string(format_v="HHmm")
-            for item in self.cp.opentime.split("|"):
-                start_time = item.split('-')[0]
-                end_time = item.split('-')[1]
-
-                if currTime < end_time:
-                    r = (int(currTime[:2]) * 60 + int(currTime[2:])) - (int(start_time[:2]) * 60 + int(start_time[2:]))
-                    if r < 0:
-                        currterm = term
-                    else:
-                        currterm = r // self.cp.termnum + term + 1
-                else:
-                    a = self.ut.arrow_to_string(
-                        self.ut.string_to_arrow(string_s=end_time, format_v="HHmm").shift(hours=-(int(start_time[0:2])),
-                                                                                     minutes=-(
-                                                                                         int(start_time[2:4]))),
-                        "HH:mm")
-                    term += (int(a.split(":")[0]) * 60 + int(a.split(":")[1])) // self.cp.termnum + 1
-
-            autoid = currterm
-            tmp = "{}%0{}d".format(today,len(self.cp.coderule) if self.cp.coderule else len(str(self.cp.termtot)))
-            return tmp%(autoid)
-
+            self.currterm = "{}{}".format(today,autoid)
+            self.nextterm = "{}{}".format(today, next_autoid)
 
 class CpGetHandler(CpTermUpdHandler):
     def __init__(self,**kwargs):
         self.count = 2
         self.cp = kwargs.get('cp',None)
-        self.ut = kwargs.get('ut',None)
 
-        super(CpGetHandler,self).__init__(ut=self.ut,cp=self.cp)
+        super(CpGetHandler,self).__init__(cp=self.cp)
 
     def getRun(self,func):
         """
@@ -137,6 +104,42 @@ class CpGetHandler(CpTermUpdHandler):
         res = context["customFuncForCp"]
         return res(request, re, json)
 
+    def saveCpTerm(self,today):
+
+        tomorrow = self.ut.arrow_to_string(self.ut.today.shift(days=1), format_v="YYYYMMDD")
+
+        next = ""
+        for i in range(self.cp.termtot):
+            term = "{}%0{}d".format(tomorrow, len(self.cp.coderule) if self.cp.coderule else len(str(self.cp.termtot)))
+            term = term % (i + 1)
+            if i == 0:
+                next = term
+                break
+
+        data = {}
+        for i in range(self.cp.termtot):
+
+            term = "{}%0{}d".format(today, len(self.cp.coderule) if self.cp.coderule else len(str(self.cp.termtot)))
+            term = term % (i + 1)
+
+            if i == self.cp.termtot - 1:
+                nextterm = next
+            else:
+                nextterm = "{}%0{}d".format(today,
+                                            len(self.cp.coderule) if self.cp.coderule else len(str(self.cp.termtot)))
+                nextterm = nextterm % (i + 2)
+            data[term] = nextterm
+
+        db = MysqlPoolSync().get_conn
+        for key in data:
+            with db.atomic() :
+                try:
+                    CpTermListHistory.create(cpid=self.cp.id, cpno="", term=key,nextterm=data[key])
+                except Exception as e:
+                    if not ('Duplicate entry' in str(e) and 'cptermlisthistory_ptr_01' in str(e)):
+                        raise Exception(e)
+        return None
+
     def getRunCustom(self):
         """
         私彩生成开奖号码
@@ -148,96 +151,90 @@ class CpGetHandler(CpTermUpdHandler):
 
         rule = json.loads(self.cp.cpnorule)
         cpno = ""
-        for item in range(rule['tot']):
+        for item in range(int(rule['tot'])):
             cpno += "{},".format(random.choice(rule['limit']))
 
         return cpno[:-1]
 
-    def run(self,cpTermListObj):
+    def run(self):
         #官彩需要爬数据
         if self.cp.type == '0':
             for cpFunc in json.loads(self.cp.code)['code']:
                 count  = 0
+                timecount = 0
                 while True:
                     count += 1
                     try:
                         res = self.getRun(cpFunc)
-                        if cpTermListObj:
-                            if res[0] == cpTermListObj.currterm:
-                                time.sleep(2)
-                                return self.run(cpTermListObj)
-                            else:
-                                return res
+                        logger.info("{}-{}-{}".format(self.cp.name,self.currterm,res))
+                        if res[0] == self.currterm:
+                            return res
                         else:
-                            currterm = self.getNextTerm()
-                            print("currterm:{}".format(currterm))
-                            if currterm == res[0]:
-                                return res
-                            else:
-                                time.sleep(2)
-                                return self.run(cpTermListObj)
+                            time.sleep(2)
+                            timecount += 2
+                            if timecount >= 10 * 60:
+                                break
+                            return self.run()
                     except Exception as e:
                         print(count,str(e))
                         if count >= self.count:
                             break
-                        return self.run(cpTermListObj)
+                        return self.run()
         # 私彩直接生成开奖号码
         else:
-            if cpTermListObj:
-                currterm = self.getNextTerm(cpTermListObj.currterm)
-                nextterm = self.getNextTerm(currterm)
-            else:
-                currterm = self.getNextTerm()
-                nextterm = self.getNextTerm(currterm)
+            return self.currterm,self.getRunCustom(),self.nextterm
 
-            return currterm,self.getRunCustom(),nextterm
+        return None
 
 
     def save(self):
+
+        db = MysqlPoolSync().get_conn
+
+        res = self.run()
+
+        if not res:
+            logger.info("未获取到该开奖信息!")
+            return None
+
         try:
             cpTermListObj = CpTermList.get(CpTermList.cpid == self.cp.id)
         except CpTermList.DoesNotExist:
             cpTermListObj = None
-        db = MysqlPoolSync().get_conn
-
-        res = self.run(cpTermListObj)
 
         if not res[0]:
             logger.info("暂未到开奖时间!")
         else:
-            if cpTermListObj:
-                if cpTermListObj.currterm == res[0]:
-                    logger.info("{}[{}]采集数据失败,已采集!".format(self.cp.name, res[0]))
-                else:
-                    with db.atomic() as transaction:
+            with db.atomic():
+                if cpTermListObj:
+                    if cpTermListObj.currterm == res[0]:
+                        logger.info("{}[{}]采集数据失败,已采集!".format(self.cp.name, res[0]))
+                    else:
                         cpTermListObj.cpno = res[1]
                         cpTermListObj.currterm = res[0]
                         cpTermListObj.nextterm = res[2]
                         cpTermListObj.createtime = self.ut.timestamp
                         cpTermListObj.save()
-                        CpTermListHistory.create(cpid=self.cp.id, cpno=res[1], term=res[0])
-                    logger.info("{}[{}]采集数据成功!".format(self.cp.name, res[0]))
-            else:
-                with db.atomic() as transaction:
-                    CpTermList.create(cpid=self.cp.id,cpno=res[1],currterm=res[0],nextterm=res[2])
-                    CpTermListHistory.create(cpid=self.cp.id,cpno=res[1],term=res[0])
-                logger.info("{}[{}]采集数据成功!".format(self.cp.name,res[0]))
+                else:
+                        CpTermList.create(cpid=self.cp.id, cpno=res[1], currterm=res[0], nextterm=res[2],createtime=self.ut.timestamp)
+
+                CpTermListHistory.create(cpid=self.cp.id, cpno=res[1], term=res[0],createtime=self.ut.timestamp)
+
+                logger.info("{}[{}-{}-{}]采集数据成功!".format(self.cp.name, res[0],res[1],res[2]))
 
 class CpTaskBase(CpGetHandler):
 
     def __init__(self,id):
 
-        self.ut = UtilTime()
         self.cp = Cp.get(id=id)
+        super(CpTaskBase,self).__init__(cp=self.cp)
 
-        super(CpTaskBase,self).__init__(cp=self.cp,ut=self.ut)
-
-    def getCp(self):
-
+    def getCp(self,**kwargs):
+        self.ut = UtilTime()
+        self.getTerm(kwargs.get("autoid",None),kwargs.get("next_autoid",None))
         self.save()
 
-
 if __name__ == '__main__':
-    cpTask = CpTaskBase(2)
+    cpTask = CpTaskBase(4)
 
-    cpTask.getCp()
+    print(cpTask.getNextTerm())

@@ -6,10 +6,9 @@ class CpTermList(BaseModel):
 
     id=AutoField(primary_key=True)
     cpid = IntegerField(verbose_name="彩票ID")
-    cpno = CharField(verbose_name="开奖号码",max_length=60,default="")
-    currterm = CharField(verbose_name="当前期数",max_length=30,default="")
+    cpno = CharField(verbose_name="开奖号码", max_length=60, default="")
+    currterm = CharField(verbose_name="期数", max_length=30, default="")
     nextterm = CharField(verbose_name="下一期数",max_length=30,default="")
-    createtime = BigIntegerField(default=0)
 
     class Meta:
         db_table = 'cptermlist'
@@ -20,7 +19,6 @@ class CpTermListHistory(BaseModel):
     cpid = IntegerField(verbose_name="彩票ID")
     cpno = CharField(verbose_name="开奖号码",max_length=60,default="")
     term = CharField(verbose_name="期数", max_length=30, default="")
-    createtime = BigIntegerField(default=0)
 
     class Meta:
         verbose_name = '彩票期数历史明细'

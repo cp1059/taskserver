@@ -76,13 +76,19 @@ class CpTermUpdHandler(object):
     #         tmp = "{}%0{}d".format(today,len(self.cp.coderule) if self.cp.coderule else len(str(self.cp.termtot)))
     #         return tmp%(autoid)
 
+    def get_cp_term_coderules_before(self):
+        coderule = json.loads(self.cp.coderule)
+        if coderule['before']['type'] == '0':
+            today = self.ut.arrow_to_string(format_v=coderule['before']['value'])
+            tomorrow = self.ut.arrow_to_string(self.ut.today.shift(days=1), format_v=coderule['before']['value'])
+            return today, tomorrow
+
     def getTerm(self,autoid,next_autoid):
 
-        today = self.ut.arrow_to_string(format_v="YYYYMMDD")
-        tomorrow = self.ut.arrow_to_string(self.ut.today.shift(days=1), format_v="YYYYMMDD")
+        today,tomorrow = self.get_cp_term_coderules_before()
         if autoid>next_autoid:
             self.currterm = "{}{}".format(today,autoid)
-            self.nextterm = "{}{}".format(tomorrow, next_autoid)
+            self.nextterm = "{}{}".format(tomorrow,next_autoid)
         else:
             self.currterm = "{}{}".format(today,autoid)
             self.nextterm = "{}{}".format(today, next_autoid)
@@ -171,9 +177,9 @@ class CpGetHandler(CpTermUpdHandler):
                         if res[0] == self.currterm:
                             return res
                         else:
-                            time.sleep(2)
-                            timecount += 2
-                            if timecount >= 10 * 60:
+                            time.sleep(5)
+                            timecount += 5
+                            if timecount >= 5 * 60:
                                 break
                             return self.run()
                     except Exception as e:

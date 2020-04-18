@@ -11,3 +11,4 @@ redis
 arrow==0.15.0
 peewee-async==0.6.0a0
 apscheduler
+beautifulsoup4

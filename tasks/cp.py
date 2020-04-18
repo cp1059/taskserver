@@ -1,6 +1,7 @@
 
 import json,re,random,time
 from requests import request
+from bs4 import BeautifulSoup
 from loguru import logger
 from utils.time_st import UtilTime
 from models.cp import Cp,CpTermList,CpTermListHistory
@@ -102,7 +103,7 @@ class CpGetHandler(CpTermUpdHandler):
         context={}
         exec(func,context)
         res = context["customFuncForCp"]
-        return res(request, re, json)
+        return res(request=request, re=re, json=json,BeautifulSoup=BeautifulSoup)
 
     def saveCpTerm(self,today):
 

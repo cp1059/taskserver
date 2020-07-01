@@ -219,7 +219,7 @@ class CpGetHandler(CpTermUpdHandler):
                         cpTermListObj.currterm = res[0]
                         cpTermListObj.nextterm = res[2]
                         cpTermListObj.createtime = self.ut.timestamp
-                        cpTermListObj.save()
+                        await self.db.update(cpTermListObj)
                 else:
                         await self.db.create(CpTermList,cpid=self.cp.id, cpno=res[1], currterm=res[0], nextterm=res[2],createtime=self.ut.timestamp)
 

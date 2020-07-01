@@ -1,14 +1,14 @@
 
 import json
 from tasks.cp import CpTaskBase
-from models.cp import Cp
+from models.cp import CpSync
 from loguru import logger
 
-def add_task(scheduler=None):
+def add_task(scheduler=None,db=None):
 
-    for item in Cp.select():
+    for item in CpSync.select():
 
-        cpTask = CpTaskBase(id=item.id)
+        cpTask = CpTaskBase(id=item.id,db=db,CpSync=CpSync)
 
         logger.info("{}任务表加载中...".format(item.name))
 

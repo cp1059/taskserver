@@ -6,7 +6,7 @@ from tornado.options import options
 
 from apscheduler.schedulers.tornado import TornadoScheduler
 
-from utils.database import RedisPoolSync,MysqlPoolSync
+from utils.database import MysqlPool
 from loguru import logger
 from router import urlpattern
 from config import common
@@ -32,18 +32,18 @@ class Server(object):
         apps = tornado.web.Application(handlers=urlpattern,default_host=None,transforms=None,**common)
 
         #初始化redis
-        apps.redis = RedisPoolSync().get_conn()
+        # apps.redis = RedisPoolSync().get_conn()
 
         #初始化mysql
-        apps.mysql = MysqlPoolSync().get_conn
+        apps.mysql = MysqlPool().get_manager
 
         return apps
 
-    def init_scheduler(self,db,redis):
+    def init_scheduler(self,db):
         self.scheduler = TornadoScheduler()
         self.scheduler.start()
 
-        add_task(self.scheduler)
+        add_task(self.scheduler,db)
 
     def start(self):
         try:
@@ -52,7 +52,7 @@ class Server(object):
             loop = asyncio.get_event_loop()
             app = self.make_app(loop)
 
-            self.init_scheduler(app.mysql,app.redis)
+            self.init_scheduler(app.mysql)
 
             app.listen(options.common_port)
             logger.info("port: {}".format(options.common_port))

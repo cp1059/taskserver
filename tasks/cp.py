@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 from loguru import logger
 from utils.time_st import UtilTime
 from models.cp import Cp,CpTermList,CpTermListHistory
-from utils.database.mysql import MysqlPoolSync
+from utils.database import MysqlPool
 
 """    
 def customFuncForCp(request,re,json):
@@ -194,9 +194,7 @@ class CpGetHandler(CpTermUpdHandler):
         return None
 
 
-    def save(self):
-
-        db = MysqlPoolSync().get_conn
+    async def save(self):
 
         res = self.run()
 
@@ -205,14 +203,14 @@ class CpGetHandler(CpTermUpdHandler):
             return None
 
         try:
-            cpTermListObj = CpTermList.get(CpTermList.cpid == self.cp.id)
+            cpTermListObj = await self.db.get(CpTermList, cpid=self.cp.id)
         except CpTermList.DoesNotExist:
             cpTermListObj = None
 
         if not res[0]:
             logger.info("暂未到开奖时间!")
         else:
-            with db.atomic():
+            async with MysqlPool().get_conn.atomic_async():
                 if cpTermListObj:
                     if cpTermListObj.currterm == res[0]:
                         logger.info("{}[{}]采集数据失败,已采集!".format(self.cp.name, res[0]))
@@ -223,23 +221,24 @@ class CpGetHandler(CpTermUpdHandler):
                         cpTermListObj.createtime = self.ut.timestamp
                         cpTermListObj.save()
                 else:
-                        CpTermList.create(cpid=self.cp.id, cpno=res[1], currterm=res[0], nextterm=res[2],createtime=self.ut.timestamp)
+                        await self.db.create(CpTermList,cpid=self.cp.id, cpno=res[1], currterm=res[0], nextterm=res[2],createtime=self.ut.timestamp)
 
-                CpTermListHistory.create(cpid=self.cp.id, cpno=res[1], term=res[0],createtime=self.ut.timestamp)
+                await self.db.create(CpTermListHistory,cpid=self.cp.id, cpno=res[1], term=res[0],createtime=self.ut.timestamp)
 
                 logger.info("{}[{}-{}-{}]采集数据成功!".format(self.cp.name, res[0],res[1],res[2]))
 
 class CpTaskBase(CpGetHandler):
 
-    def __init__(self,id):
+    def __init__(self,id,db,CpSync):
 
-        self.cp = Cp.get(id=id)
+        self.cp = CpSync.get(id=id)
+        self.db = db
         super(CpTaskBase,self).__init__(cp=self.cp)
 
-    def getCp(self,**kwargs):
+    async def getCp(self,**kwargs):
         self.ut = UtilTime()
         self.getTerm(kwargs.get("autoid",None),kwargs.get("next_autoid",None))
-        self.save()
+        await self.save()
 
 if __name__ == '__main__':
     cpTask = CpTaskBase(4)

@@ -28,7 +28,7 @@ class CpTermUpdHandler(object):
 
     def __init__(self,**kwargs):
 
-        self.cp = kwargs.get("cp")
+        pass
 
     # def getNextTerm(self,term=None):
     #
@@ -112,9 +112,8 @@ class CpTermUpdHandler(object):
 class CpGetHandler(CpTermUpdHandler):
     def __init__(self,**kwargs):
         self.count = 2
-        self.cp = kwargs.get('cp',None)
 
-        super(CpGetHandler,self).__init__(cp=self.cp)
+        super(CpGetHandler,self).__init__()
 
     def getRun(self,func):
         """
@@ -254,7 +253,7 @@ class CpTaskBase(CpGetHandler):
 
         self.pk = id
         self.db = db
-        super(CpTaskBase,self).__init__(cp=self.cp)
+        super(CpTaskBase,self).__init__()
 
     async def getCp(self,**kwargs):
 

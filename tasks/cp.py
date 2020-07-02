@@ -124,7 +124,7 @@ class CpGetHandler(CpTermUpdHandler):
         context={}
         exec(func,context)
         res = context["customFuncForCp"]
-        return res(request=request, re=re, json=json,BeautifulSoup=BeautifulSoup)
+        return res(request=request, re=re, json=json,BeautifulSoup=BeautifulSoup,ut=UtilTime)
 
     # def saveCpTerm(self,today):
     #
@@ -231,7 +231,7 @@ class CpGetHandler(CpTermUpdHandler):
                         cpTermListObj.currterm = res[0]
                         cpTermListObj.nextterm = res[2]
                         cpTermListObj.createtime = self.ut.timestamp
-                        cpTermListObj.nexttime = res[3]
+                        cpTermListObj.nexttime = res[3] if len(res)>3 else 0
                         await self.db.update(cpTermListObj)
                 else:
                         await self.db.create(
@@ -241,7 +241,7 @@ class CpGetHandler(CpTermUpdHandler):
                             currterm=res[0],
                             nextterm=res[2],
                             createtime=self.ut.timestamp,
-                            nexttime = res[3])
+                            nexttime = res[3] if len(res)>3 else 0)
 
                 await self.db.create(CpTermListHistory,cpid=self.cp.id, cpno=res[1], term=res[0],createtime=self.ut.timestamp)
 

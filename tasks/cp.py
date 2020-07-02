@@ -196,12 +196,12 @@ class CpGetHandler(CpTermUpdHandler):
                             timecount += 5
                             if timecount >= 5 * 60:
                                 break
-                            return self.run()
+                            return await self.run()
                     except Exception as e:
                         print(count,str(e))
                         if count >= self.count:
                             break
-                        return self.run()
+                        return await self.run()
         # 私彩直接生成开奖号码
         else:
             return self.currterm,self.getRunCustom(),self.nextterm,None

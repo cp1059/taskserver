@@ -10,6 +10,7 @@ class CpTermList(BaseModel):
     cpno = CharField(verbose_name="开奖号码", max_length=60, default="")
     currterm = CharField(verbose_name="期数", max_length=30, default="")
     nextterm = CharField(verbose_name="下一期数",max_length=30,default="")
+    nexttime = BigIntegerField(verbose_name="下期时间",default=0)
 
     class Meta:
         db_table = 'cptermlist'

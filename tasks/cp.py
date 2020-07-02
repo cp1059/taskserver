@@ -6,6 +6,7 @@ from loguru import logger
 from utils.time_st import UtilTime
 from models.cp import Cp,CpTermList,CpTermListHistory
 from utils.database import MysqlPool
+from asyncio import sleep
 
 """    
 def customFuncForCp(request,re,json):
@@ -83,15 +84,30 @@ class CpTermUpdHandler(object):
             tomorrow = self.ut.arrow_to_string(self.ut.today.shift(days=1), format_v=coderule['before']['value'])
             return today, tomorrow
 
-    def getTerm(self,autoid,next_autoid):
+    async def getTerm(self,autoid,next_autoid):
 
-        today,tomorrow = self.get_cp_term_coderules_before()
-        if autoid>next_autoid:
-            self.currterm = "{}{}".format(today,autoid)
-            self.nextterm = "{}{}".format(tomorrow,next_autoid)
+
+        try:
+            self.cpTermListObj = await self.db.get(CpTermList, cpid=self.cp.id)
+        except CpTermList.DoesNotExist:
+            self.cpTermListObj = None
+
+        if self.ispc:
+            if self.cpTermListObj:
+                self.currterm = self.cpTermListObj.nextterm
+            else:
+                self.currterm = None
+                self.nextterm = None
         else:
-            self.currterm = "{}{}".format(today,autoid)
-            self.nextterm = "{}{}".format(today, next_autoid)
+            today,tomorrow = self.get_cp_term_coderules_before()
+            if autoid>next_autoid:
+                self.currterm = "{}{}".format(today,autoid)
+                self.nextterm = "{}{}".format(tomorrow,next_autoid)
+            else:
+                self.currterm = "{}{}".format(today,autoid)
+                self.nextterm = "{}{}".format(today, next_autoid)
+
+
 
 class CpGetHandler(CpTermUpdHandler):
     def __init__(self,**kwargs):
@@ -111,41 +127,41 @@ class CpGetHandler(CpTermUpdHandler):
         res = context["customFuncForCp"]
         return res(request=request, re=re, json=json,BeautifulSoup=BeautifulSoup)
 
-    def saveCpTerm(self,today):
-
-        tomorrow = self.ut.arrow_to_string(self.ut.today.shift(days=1), format_v="YYYYMMDD")
-
-        next = ""
-        for i in range(self.cp.termtot):
-            term = "{}%0{}d".format(tomorrow, len(self.cp.coderule) if self.cp.coderule else len(str(self.cp.termtot)))
-            term = term % (i + 1)
-            if i == 0:
-                next = term
-                break
-
-        data = {}
-        for i in range(self.cp.termtot):
-
-            term = "{}%0{}d".format(today, len(self.cp.coderule) if self.cp.coderule else len(str(self.cp.termtot)))
-            term = term % (i + 1)
-
-            if i == self.cp.termtot - 1:
-                nextterm = next
-            else:
-                nextterm = "{}%0{}d".format(today,
-                                            len(self.cp.coderule) if self.cp.coderule else len(str(self.cp.termtot)))
-                nextterm = nextterm % (i + 2)
-            data[term] = nextterm
-
-        db = MysqlPoolSync().get_conn
-        for key in data:
-            with db.atomic() :
-                try:
-                    CpTermListHistory.create(cpid=self.cp.id, cpno="", term=key,nextterm=data[key])
-                except Exception as e:
-                    if not ('Duplicate entry' in str(e) and 'cptermlisthistory_ptr_01' in str(e)):
-                        raise Exception(e)
-        return None
+    # def saveCpTerm(self,today):
+    #
+    #     tomorrow = self.ut.arrow_to_string(self.ut.today.shift(days=1), format_v="YYYYMMDD")
+    #
+    #     next = ""
+    #     for i in range(self.cp.termtot):
+    #         term = "{}%0{}d".format(tomorrow, len(self.cp.coderule) if self.cp.coderule else len(str(self.cp.termtot)))
+    #         term = term % (i + 1)
+    #         if i == 0:
+    #             next = term
+    #             break
+    #
+    #     data = {}
+    #     for i in range(self.cp.termtot):
+    #
+    #         term = "{}%0{}d".format(today, len(self.cp.coderule) if self.cp.coderule else len(str(self.cp.termtot)))
+    #         term = term % (i + 1)
+    #
+    #         if i == self.cp.termtot - 1:
+    #             nextterm = next
+    #         else:
+    #             nextterm = "{}%0{}d".format(today,
+    #                                         len(self.cp.coderule) if self.cp.coderule else len(str(self.cp.termtot)))
+    #             nextterm = nextterm % (i + 2)
+    #         data[term] = nextterm
+    #
+    #     db = MysqlPoolSync().get_conn
+    #     for key in data:
+    #         with db.atomic() :
+    #             try:
+    #                 CpTermListHistory.create(cpid=self.cp.id, cpno="", term=key,nextterm=data[key])
+    #             except Exception as e:
+    #                 if not ('Duplicate entry' in str(e) and 'cptermlisthistory_ptr_01' in str(e)):
+    #                     raise Exception(e)
+    #     return None
 
     def getRunCustom(self):
         """
@@ -163,7 +179,7 @@ class CpGetHandler(CpTermUpdHandler):
 
         return cpno[:-1]
 
-    def run(self):
+    async def run(self):
         #官彩需要爬数据
         if self.cp.type == '0':
             for cpFunc in json.loads(self.cp.code)['code']:
@@ -174,10 +190,10 @@ class CpGetHandler(CpTermUpdHandler):
                     try:
                         res = self.getRun(cpFunc)
                         logger.info("{}-{}-{}".format(self.cp.name,self.currterm,res))
-                        if res[0] == self.currterm:
+                        if res[0] == self.currterm or not self.currterm:
                             return res
                         else:
-                            time.sleep(5)
+                            await sleep(5)
                             timecount += 5
                             if timecount >= 5 * 60:
                                 break
@@ -189,23 +205,20 @@ class CpGetHandler(CpTermUpdHandler):
                         return self.run()
         # 私彩直接生成开奖号码
         else:
-            return self.currterm,self.getRunCustom(),self.nextterm
+            return self.currterm,self.getRunCustom(),self.nextterm,None
 
         return None
 
 
     async def save(self):
 
-        res = self.run()
+        res = await self.run()
 
         if not res:
             logger.info("未获取到该开奖信息!")
             return None
 
-        try:
-            cpTermListObj = await self.db.get(CpTermList, cpid=self.cp.id)
-        except CpTermList.DoesNotExist:
-            cpTermListObj = None
+        cpTermListObj = self.cpTermListObj
 
         if not res[0]:
             logger.info("暂未到开奖时间!")
@@ -219,9 +232,17 @@ class CpGetHandler(CpTermUpdHandler):
                         cpTermListObj.currterm = res[0]
                         cpTermListObj.nextterm = res[2]
                         cpTermListObj.createtime = self.ut.timestamp
+                        cpTermListObj.nexttime = res[3]
                         await self.db.update(cpTermListObj)
                 else:
-                        await self.db.create(CpTermList,cpid=self.cp.id, cpno=res[1], currterm=res[0], nextterm=res[2],createtime=self.ut.timestamp)
+                        await self.db.create(
+                            CpTermList,
+                            cpid=self.cp.id,
+                            cpno=res[1],
+                            currterm=res[0],
+                            nextterm=res[2],
+                            createtime=self.ut.timestamp,
+                            nexttime = res[3])
 
                 await self.db.create(CpTermListHistory,cpid=self.cp.id, cpno=res[1], term=res[0],createtime=self.ut.timestamp)
 
@@ -229,15 +250,20 @@ class CpGetHandler(CpTermUpdHandler):
 
 class CpTaskBase(CpGetHandler):
 
-    def __init__(self,id,db,CpSync):
+    def __init__(self,id,db):
 
-        self.cp = CpSync.get(id=id)
+        self.pk = id
         self.db = db
         super(CpTaskBase,self).__init__(cp=self.cp)
 
     async def getCp(self,**kwargs):
+
+        self.cp = await self.db.get(Cp, id=self.pk)
+
         self.ut = UtilTime()
-        self.getTerm(kwargs.get("autoid",None),kwargs.get("next_autoid",None))
+        self.ispc = kwargs.get("ispc",None)
+
+        await self.getTerm(kwargs.get("autoid",None),kwargs.get("next_autoid",None))
         await self.save()
 
 if __name__ == '__main__':

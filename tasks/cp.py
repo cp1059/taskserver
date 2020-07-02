@@ -111,7 +111,7 @@ class CpTermUpdHandler(object):
 
 class CpGetHandler(CpTermUpdHandler):
     def __init__(self,**kwargs):
-        self.count = 2
+        self.count = 3
 
         super(CpGetHandler,self).__init__()
 

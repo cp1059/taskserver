@@ -46,6 +46,8 @@ class Cp(BaseModel):
 
     opentime = CharField(max_length=100,default='0030-0310|0730-2350',verbose_name="每天开奖时间")
 
+    ispc = CharField(max_length=1,verbose_name="期号是否走爬虫规则,0-是,1-否",default="1")
+
     type = CharField(max_length=1,verbose_name="类型,0-官方,1-私有 官方数据需要做采集",default=0)
 
     status = CharField(max_length=1,verbose_name="状态,0-正常,1-停售,2-维护")
@@ -86,6 +88,8 @@ class CpSync(Model):
     termtot = IntegerField(verbose_name="总共多少期,这个可以根据开奖时间和多少分钟一期算出来,算头算尾",default=0)
 
     opentime = CharField(max_length=100,default='0030-0310|0730-2350',verbose_name="每天开奖时间")
+
+    ispc = CharField(max_length=1,verbose_name="期号是否走爬虫规则,0-是,1-否",default="1")
 
     type = CharField(max_length=1,verbose_name="类型,0-官方,1-私有 官方数据需要做采集",default=0)
 
